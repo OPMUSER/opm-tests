@@ -9,15 +9,15 @@
 
 -- Summary file for the base case, specific version
 
-DATE
-
------------------
 -- Field Data
 -----------------
 -- Production rates
+FPR
 FOPR
 FWPR
 FGPR
+FGSR
+FLPR
 FOPRH
 FWPRH
 FGPRH
@@ -25,11 +25,16 @@ FGPRH
 FOPT
 FWPT
 FGPT
+FLPT
 -- Production ratios
 FGOR
 FGORH
 FWCT
 FWCTH
+
+FMCTP
+FMCTW
+FMCTG
 -- Injection rates
 -- Injection cumulatives
 -- Pressure and fluid
@@ -55,6 +60,10 @@ WGPR
 WWPR
  'PROD*' /
 
+WLPR
+ 'PROD*' /
+
+
 WOPRH
  'PROD*' /
 
@@ -73,6 +82,10 @@ WGPT
 
 WWPT
  'PROD*' /
+
+WLPT
+ 'PROD*' /
+
 
 WOPTH
  'PROD*' /
@@ -116,28 +129,113 @@ WWIRH
 WBHP
  'PROD*' 'INJ*' /
 
+WTHP
+ 'PROD*'  /
+ 
 -- potentials 
 
-WPIG
-  'PROD*' /
+WGIP
+  /
 
-WPIO
-  'PROD*' /
+WWIP
+  /
 
-WPIL
-  'PROD*' /
-
-WPIW
-  'PROD*' /
 
 WOPP
-  'PROD*' /
+ /
 
 WGPP
-  'PROD*' /
+ /
 
 WWPP
-  'PROD*' /
+ /
+
+
+WOPGR
+/
+WGPGR
+/
+WWPGR
+/
+WVPGR
+/
+
+WOIGR
+/
+WWIGR
+/
+WGIGR
+/
+
+
+
+-- Group data
+
+
+GOPR
+/
+GWPR
+/
+GGPR
+/
+GGSR
+/
+GLPR
+/
+
+GMCTP
+/
+GMCTW
+/
+GMCTG
+/
+GOPGR
+/
+GGPGR
+/
+GWPGR
+/
+GVPGR
+/
+
+GOIGR
+/
+GWIGR
+/
+GGIGR
+/
+
+
+GOPT
+/
+GWPT
+/
+GGPT
+/
+GLPT
+/
+
+GWIR
+/
+GGIR
+/
+
+GWIT
+/
+GGIT
+/
+
+GOPP
+/
+GGPP
+/
+GWPP
+/
+
+GWPI
+/
+GGPI
+/
 
 
  
