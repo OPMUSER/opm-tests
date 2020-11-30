@@ -5,8 +5,10 @@
 
 -- Copyright (C) 2020 Equinor
 
--- This model is based on the base case for model5.
--- Added extended network option
+
+-- This model tests TRAN modifiers in the EDIT section
+-- Here only MAXVALUE is used to modidify TRAN.
+
 
 
 ------------------------------------------------------------------------------------------------
@@ -37,18 +39,14 @@ EQLDIMS
  1  100  25 /
 
 
-NETWORK
- 3 2 /
-
-
 REGDIMS
 -- max. ntfip  nmfipr  max. nrfreg   max. ntfreg
-   2          1       1*            2    /
+   3          2       1*            2    /
 
 --
 TABDIMS
 --ntsfun     ntpvt  max.nssfun  max.nppvt  max.ntfip  max.nrpvt
-  1          1      150          60         2         60 /
+  1          1      150          60         3         60 /
 
 --
 WELLDIMS
@@ -73,7 +71,7 @@ NEWTRAN
 
 --
 GRIDFILE
- 0  1/
+ 0  1 /
 
 --
 GRIDUNIT
@@ -86,21 +84,21 @@ INIT
 INCLUDE
  'include/test1_20x30x10.grdecl' /
 
+INCLUDE
+ 'include/permx_model5.grdecl' /
+ 
 
 PORO
- 6000*0.28 /
-
-PERMX
- 6000*10000.0 /
-
-PERMZ
- 6000*1000.0 /
-
+ 6000*0.28 / 
 
 COPY
   PERMX PERMY /
+  PERMX PERMZ /
 /
 
+MULTIPLY
+  PERMZ 0.1 /
+/ 
 
 RPTGRID
  'ALLNNC' /
@@ -113,6 +111,18 @@ EQUALS
 ------------------------------------------------------------------------------------------------
 EDIT
 ------------------------------------------------------------------------------------------------
+
+-- actual maximum value is 35719 in this case
+-- a max max value of 32000 should affect 76 cells
+-- there are in other words 108 cells  
+
+-- mean value without maxvalue tranz: 13351
+-- mean value with maxvalue tranz: 13326
+
+
+MAXVALUE
+  TRANZ 32000 /
+/
 
 
 ------------------------------------------------------------------------------------------------
@@ -139,12 +149,17 @@ REGIONS
 EQLNUM
  6000*1 /
 
-FIPNUM
- 6000*1 /
+EQUALS
+  FIPNUM  1  1 20   1 14  1 10 /
+  FIPNUM  2  1 20  15 30  1 10 /
+/ 
 
 SATNUM
  6000*1 /
 
+-- custom region
+FIPABC
+  2000*1 2000*2 2000*3 /
 
 ------------------------------------------------------------------------------------------------
 SOLUTION
@@ -173,10 +188,6 @@ INCLUDE
  'include/summary.inc' /
 
 
-
-
-
-
 ------------------------------------------------------------------------------------------------
 SCHEDULE
 ------------------------------------------------------------------------------------------------
@@ -197,9 +208,12 @@ SCHEDULE
 --
 
 TUNING
- 0.5 5.0 /
+ 0.5 1  /
  /
- /
+ 2* 50 1*  20 /
+
+NUPCOL
+ 4 /
 
 
 GRUPTREE
@@ -282,20 +296,9 @@ WCONINJE
   'G-4H'        WATER   OPEN    GRUP    4000    1*      225.0    1*      1*     /
 /
 
+TSTEP
+ 0.5 /
 
-
-BRANPROP
---  Downtree  Uptree   #VFP    ALQ
-    B1        PLAT-A   5       1* /
-    C1        PLAT-A   4       1* /
-/
-
-NODEPROP
---  Node_name  Press  autoChoke?  addGasLift?  Group_name
-     PLAT-A    21.0   NO          NO           1*  /
-     B1        1*     NO          NO           1*  /
-     C1        1*     NO          NO           1*  /
-/
 
 DATES
  1 FEB 2020 /
@@ -316,16 +319,8 @@ WELOPEN
 
 DATES
  1 APR 2020 /
-/
-
-WELOPEN
- 'B-3H' OPEN /
-/
-
-DATES
  1 MAY 2020 /
- 1 JUN 2020 /
- 1 JUL 2020 /
 /
 
 END
+
