@@ -5,8 +5,14 @@
 
 -- Copyright (C) 2020 Equinor
 
--- This model is based on the base case for model5.
--- Added extended network option and gas lift optimization
+
+-- This model tests GCONINJE item10 = NETV. This defines that guide rates for the
+-- groups injection should be set according to the groups net reservoir voidate rate.
+
+-- Injector F-1H and F-2H is opened while oil target rate group M5N is zero.  
+-- Injectors should be opened and wbhp should be calculated, but injection rate 
+-- should be 0.0 for both injectors F-1H and F-2.
+
 
 
 ------------------------------------------------------------------------------------------------
@@ -37,18 +43,14 @@ EQLDIMS
  1  100  25 /
 
 
-NETWORK
- 3 2 /
-
-
 REGDIMS
 -- max. ntfip  nmfipr  max. nrfreg   max. ntfreg
-   2          1       1*            2    /
+   3          2       1*            2    /
 
 --
 TABDIMS
 --ntsfun     ntpvt  max.nssfun  max.nppvt  max.ntfip  max.nrpvt
-  1          1      150          60         2         60 /
+  1          1      150          60         3         60 /
 
 --
 WELLDIMS
@@ -73,7 +75,7 @@ NEWTRAN
 
 --
 GRIDFILE
- 0  1/
+ 0  1 /
 
 --
 GRIDUNIT
@@ -86,21 +88,21 @@ INIT
 INCLUDE
  'include/test1_20x30x10.grdecl' /
 
+INCLUDE
+ 'include/permx_model5.grdecl' /
+ 
 
 PORO
- 6000*0.28 /
-
-PERMX
- 6000*10000.0 /
-
-PERMZ
- 6000*1000.0 /
-
+ 6000*0.28 / 
 
 COPY
   PERMX PERMY /
+  PERMX PERMZ /
 /
 
+MULTIPLY
+  PERMZ 0.1 /
+/ 
 
 RPTGRID
  'ALLNNC' /
@@ -113,6 +115,18 @@ EQUALS
 ------------------------------------------------------------------------------------------------
 EDIT
 ------------------------------------------------------------------------------------------------
+
+-- actual maximum value is 35719 in this case
+-- a max max value of 32000 should affect 76 cells
+-- there are in other words 108 cells  
+
+-- mean value without maxvalue tranz: 13351
+-- mean value with maxvalue tranz: 13326
+
+
+MAXVALUE
+  TRANZ 32000 /
+/
 
 
 ------------------------------------------------------------------------------------------------
@@ -139,12 +153,17 @@ REGIONS
 EQLNUM
  6000*1 /
 
-FIPNUM
- 6000*1 /
+EQUALS
+  FIPNUM  1  1 20   1 14  1 10 /
+  FIPNUM  2  1 20  15 30  1 10 /
+/ 
 
 SATNUM
  6000*1 /
 
+-- custom region
+FIPABC
+  2000*1 2000*2 2000*3 /
 
 ------------------------------------------------------------------------------------------------
 SOLUTION
@@ -173,10 +192,6 @@ INCLUDE
  'include/summary.inc' /
 
 
-
-
-
-
 ------------------------------------------------------------------------------------------------
 SCHEDULE
 ------------------------------------------------------------------------------------------------
@@ -197,9 +212,12 @@ SCHEDULE
 --
 
 TUNING
- 0.5 1.0 /
-/
-/
+ 0.5 1  /
+ /
+ 2* 50 1*  20 /
+
+NUPCOL
+ 4 /
 
 
 GRUPTREE
@@ -262,105 +280,97 @@ COMPDAT
 
 WCONPROD
 --  Well_name  Status  Ctrl  Orate   Wrate  Grate Lrate   RFV  FBHP   WHP  VFP Glift
-   'B-1H'      OPEN    ORAT  4000.0  1*     1*    6000.0  1*   100.0  30   1   1*  /
-   'B-2H'      SHUT    ORAT  4000.0  1*     1*    6000.0  1*   100.0  30   1   1*  /
-   'B-3H'      OPEN    ORAT  4000.0  1*     1*    6000.0  1*   100.0  30   1   1*  /
-   'C-1H'      OPEN    ORAT  4000.0  1*     1*    6000.0  1*   100.0  30   1   1*  /
-   'C-2H'      SHUT    ORAT  4000.0  1*     1*    6000.0  1*   100.0  30   1   1*  /
+   'B-1H'      OPEN    ORAT  1500.0  1*     1*    3000.0  1*   100.0  30   1   1*  /
+   'B-2H'      SHUT    ORAT  1500.0  1*     1*    3000.0  1*   100.0  30   1   1*  /
+   'B-3H'      OPEN    ORAT  1500.0  1*     1*    3000.0  1*   100.0  30   1   1*  /
+   'C-1H'      SHUT    ORAT  1500.0  1*     1*    3000.0  1*   100.0  30   1   1*  /
+   'C-2H'      SHUT    ORAT  1500.0  1*     1*    3000.0  1*   100.0  30   1   1*  /
 /
 
-GCONINJE
- 'FIELD'   'WATER'    'VREP'  3*      1.020    'NO'  5* /
+GCONPROD    --written by schedule script
+--	Group	Ctrl	Orate	Wrate	Grate	Lrate	exceedRate	higherLevel	grupGR	DguideRate	exceedWrate	exceedGrate	exceedLrate	ResVolRate	ResVolFrac	 
+     M5S     ORAT    1000    2000    1*      3000    RATE    YES     1*      '   '   1*      1*      1*      1*      1*      /
+     M5N     ORAT    0       0       1*      0       RATE    YES     1*      '   '   1*      1*      1*      1*      1*      /
+     FIELD   ORAT    750.0   1*      1*      1*      RATE    YES     1*      '   '   1*      1*      1*      1*      1*      /
 /
+
+
+GCONINJE   
+--  Group   phase       mode    Srate  totalRate reinjection  voidage higherLevel grupGR  guideRate reinjFrac	voidFrac	 
+   PLAT-A  WATER	VREP	5000.0	1*	  1*	       1.0	NO	   1*      1*	     1*	       1*	/
+   M5S     WATER	FLD	1*	1*	  1*	       1*	1*	   1*     NETV	     1*	       1*	/
+   M5N     WATER	FLD	1*	1*	  1*	       1*	1*	   1*     NETV	     1*	       1*	/
+/
+
+
 
 
 WCONINJE
 -- Well_name    Type    Status  Ctrl    SRate1  Rrate   BHP     THP     VFP
-  'F-1H'        WATER   OPEN    GRUP    4000    1*      225.0    1*      1*     /
-  'F-2H'        WATER   OPEN    GRUP    4000    1*      225.0    1*      1*     /
+  'F-1H'        WATER   SHUT    GRUP    4000    1*      225.0    1*      1*     /
+  'F-2H'        WATER   SHUT    GRUP    4000    1*      225.0    1*      1*     /
   'G-3H'        WATER   OPEN    GRUP    4000    1*      225.0    1*      1*     /
   'G-4H'        WATER   OPEN    GRUP    4000    1*      225.0    1*      1*     /
 /
 
+TSTEP
+ 0.5 /
 
-
-BRANPROP
---  Downtree  Uptree   #VFP    ALQ
-    B1        PLAT-A   5       1* /
-    C1        PLAT-A   4       1* /
-/
-
-NODEPROP
---  Node_name  Press  autoChoke?  addGasLift?  Group_name
-     PLAT-A    21.0   NO          NO           1*  /
-     B1        1*     NO          YES          1*  /
-     C1        1*     NO          YES          1*  /
-/
-
--- Turns on gas lift optimization
-LIFTOPT
- 12500 5E-3 0.0 YES /
-
-
--- Group lift gas limits for gas lift optimization
-GLIFTOPT
- 'PLAT-A'  200000 /  --
-/
-
--- wells available for gas lift
--- minimum gas lift rate, enough to keep well flowing
-WLIFTOPT
- 'B-1H'   YES   150000   1.01   -1.0  /
- 'B-2H'   YES   150000   1.01   -1.0  /
- 'B-3H'   YES   150000   1.01   -1.0  /
- 'C-1H'   YES   150000   1.01   -1.0  /
- 'C-2H'   YES   150000   1.01   -1.0  /
-/
 
 DATES
  1 FEB 2020 /
 /
 
 
-WELOPEN
- 'B-2H' OPEN /
-/
 
 DATES
  1 MAR 2020 /
 /
 
+-- well is opened, but zero guide rate since production from group M5N is zero.
 WELOPEN
- 'C-2H' OPEN /
+ 'F-1H' OPEN /
 /
 
 DATES
  1 APR 2020 /
 /
 
+-- well is opened, but zero guide rate since production from group M5N is zero.
 WELOPEN
- 'B-3H' OPEN /
+ 'F-2H' OPEN /
 /
 
-DATES
+DATES 
  1 MAY 2020 /
- 1 JUN 2020 /
+/
+
+-- starting production from group M5N
+
+GCONPROD
+--  Group   Ctrl   Orate      Wrate   Grate     Lrate   exceedRate  higherLevel	grupGR	DguideRate 
+   PLAT-A   ORAT   1500       3000.0    1*     3500.0   RATE         YES         1*	'   '       5*	/
+   M5S      ORAT   1000.0     2000.0    1*     2500.0   RATE         YES         1*	'   '       5*  /
+   M5N      ORAT   1000.0     2000.0	1*     2500.0   RATE         YES         1*	'   '       5*  /
+/
+
+-- opens producers for M5N branch
+
+WELOPEN
+ 'C-1H' OPEN /
+ 'C-2H' OPEN /
+/
+
+-- injectors F-1H and F-2H will now start to inject since production in group M5N is started
+
+DATES 
  1 JUL 2020 /
  1 AUG 2020 /
  1 SEP 2020 /
  1 OCT 2020 /
- 1 NOV 2020 /
- 1 DEC 2020 /
 /
 
-
-DATES
- 1 JAN 2021 /
- 1 FEB 2021 /
- 1 MAR 2021 /
- 1 APR 2021 /
- 1 MAY 2021 /
-/
 
 
 END
+
